@@ -106,8 +106,15 @@ class HuffmanTree:
         """Define self.root to be the Huffman tree for encoding a set of characters,
            given a map from character to frequency.
         """
-        self.root = None          # *** FIXME ***
-        raise NotImplementedError # *** TO BE IMPLEMENTED
+        trees = []
+        for char, freq in freqs.items():
+            trees.append(Leaf(freq, char))
+        while len(trees) > 1:
+            trees.sort(key=lambda x: (x.count, x.min_char))
+            left = trees.pop(0)
+            right = trees.pop(0)
+            trees.append(Node(left, right))
+        self.root = trees[0]
 
     def build_from_string(self, s):
         """Convert the string representation of a Huffman tree, as generated
@@ -118,41 +125,13 @@ class HuffmanTree:
         s = re.sub(r'Node\(\d+,', 'Node(', s)
         self.root = eval(s)
 
-
-def main():
-    """ Demonstrate defining a Huffman tree from its string representation and
-        printing and plotting it (if plotting is enabled on your machine).
-    """
-    tree = HuffmanTree()
-    tree_string = """Node(42,
-      Node(17,
-        Leaf(8, 'b'),
-        Leaf(9, 'a')),
-      Node(25,
-        Node(10,
-          Node(5,
-            Leaf(2, 'f'),
-            Leaf(3, 'd')),
-          Leaf(5, 'e')),
-        Leaf(15, 'c')))
-    """
-    tree.build_from_string(tree_string)
-    print(tree)
-    tree.plot()
-
-    # Or you can build the tree directly
-    tree2 = HuffmanTree(Node(
-      Node(
-        Leaf(8, 'b'),
-        Leaf(9, 'a')),
-      Node(
-        Node(
-          Node(
-            Leaf(2, 'f'),
-            Leaf(3, 'd')),
-          Leaf(5, 'e')),
-        Leaf(15, 'c'))))
-    print(tree2)
-    tree2.plot()
-
-main()
+# The example from the notes
+freqs = {'a': 9,
+         'b': 8,
+         'c': 15,
+         'd': 3,
+         'e': 5,
+         'f': 2}
+tree = HuffmanTree()
+tree.build_from_freqs(freqs)
+print(tree)
