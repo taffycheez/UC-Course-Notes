@@ -1,49 +1,52 @@
-def construct_perceptron(weights, bias):
-    """Returns a perceptron function using the given paramers."""
-    def perceptron(input):
-        result = 0
-        for i in range(len(input)):
-            result += input[i] * weights[i]
-        result += bias      
-        return int(result >= 0)
-    
-    return perceptron # this line is fine
-    
-def accuracy(classifier, inputs, expected_outputs):
-    correct = 0
-    for i in range(len(inputs)):
-        if classifier(inputs[i]) == expected_outputs[i]:
-            correct += 1
-    return correct / len(inputs)
+from abc import abstractmethod, ABCMeta
+import numpy as np
 
-def learn_perceptron_parameters(weights, bias, training_examples, learning_rate, max_epochs):
+class Function(metaclass=ABCMeta):
+
+    @abstractmethod
+    def __call__(self, inputs):
+        """Uses the call operator so the layer can be called like an ordinary function.
+        The method takes a vector (numpy array, list, etc) of numbers and must returns the
+        vector of values resulting from function the layer is implementing."""
+
+class ReLU(Function):
+    def __call__(self, inputs):
+        result = []
+        for i in inputs:
+            if i < 0:
+                result.append(0)
+            else:
+                result.append(i)
+        self.cache = np.array(result)
+        return np.array(result)
     
-    for _ in range(max_epochs):
-        weights_prev, bias_prev = weights.copy(), bias
-        
-        for x, y in training_examples:
-            perceptron = construct_perceptron(weights, bias)
-            pred = perceptron(x)
-            for i in range(len(x)):
-                weights[i] += learning_rate*x[i]*(y-pred)
-            bias += learning_rate*(y-pred)
-        
-        if weights == weights_prev and bias == bias_prev:
-            break
-        
-    return (weights, bias)
+class Sigmoid(Function):
+    def __call__(self, inputs):
+        result = np.array(1/(1+np.exp(-inputs)))
+        self.cache = result
+        return result
 
-weights = [2, -4]
-bias = 0
-learning_rate = 0.5
-examples = [
-  ((0, 0), 0),
-  ((0, 1), 1),
-  ((1, 0), 1),
-  ((1, 1), 0),
-  ]
-max_epochs = 50
+class Linear(Function):
+    def __init__(self, weights, bias):
+        self.weights = weights
+        self.bias = bias
+        
+    def __call__(self, inputs):
+        result = np.matmul(self.weights, inputs) + self.bias
+        self.cache = result
+        return result
 
-weights, bias = learn_perceptron_parameters(weights, bias, examples, learning_rate, max_epochs)
-print(f"Weights: {weights}")
-print(f"Bias: {bias}\n")
+def forward_pass(functions, input_vector):
+    x = input_vector
+    for f in functions:
+        x = f(x)
+    return x
+
+layer = Linear(
+    np.array([[2.0, 0.0, 1.0], [0.0, -1.0, 3.0]]),
+    np.array([1.0, 0.5])
+)
+input_vector = np.array([1.0, -1.0, -1.0])
+functions = [layer, ReLU()]
+z = forward_pass(functions, input_vector)
+print(input_vector, '->', layer.cache, '->', z)
